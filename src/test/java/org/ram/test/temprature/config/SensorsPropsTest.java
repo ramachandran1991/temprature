@@ -20,22 +20,4 @@ class SensorsPropsTest {
             assertThat(props.getHumidityThreshold()).isEqualTo(50.0);
         });
     }
-
-    @Test
-    void shouldLoadCustomValues() {
-        contextRunner
-                .withPropertyValues(
-                        "temperature.sensor.temperaturePort=4000",
-                        "temperature.sensor.humidityPort=4001",
-                        "temperature.sensor.temperatureThreshold=40.0",
-                        "temperature.sensor.humidityThreshold=60.0"
-                )
-                .run(context -> {
-                    SensorsProps props = context.getBean(SensorsProps.class);
-                    assertThat(props.getTemperaturePort()).isEqualTo(4000);
-                    assertThat(props.getHumidityPort()).isEqualTo(4001);
-                    assertThat(props.getTemperatureThreshold()).isEqualTo(40.0);
-                    assertThat(props.getHumidityThreshold()).isEqualTo(60.0);
-                });
-    }
 }

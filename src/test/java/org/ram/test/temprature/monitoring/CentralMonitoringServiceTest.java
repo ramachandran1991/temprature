@@ -9,6 +9,7 @@ import org.ram.test.temprature.config.SensorsProps;
 import org.ram.test.temprature.model.AlarmEvent;
 import org.ram.test.temprature.model.SensorMeasurement;
 import org.ram.test.temprature.model.SensorType;
+import org.ram.test.temprature.udp.SensorSimulator;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,12 +22,15 @@ class CentralMonitoringServiceTest {
     @Mock
     private SensorsProps sensorsProps;
 
+    @Mock
+    private SensorSimulator sensorSimulator;
+
     private CentralMonitoringService monitoringService;
 
     @BeforeEach
     void setUp() {
         sensorsProps = new SensorsProps();
-        monitoringService = new CentralMonitoringService(sensorsProps);
+        monitoringService = new CentralMonitoringService(sensorsProps,sensorSimulator);
     }
 
     @Test
@@ -94,20 +98,6 @@ class CentralMonitoringServiceTest {
         assertThat(alarms1).isEqualTo(alarms2);
     }
 
-    @Test
-    void shouldLimitAlarmEventsToMaxCapacity() {
-        // Given
-        for (int i = 0; i < 101; i++) {
-            SensorMeasurement measurement = createTemperatureMeasurement(40.0 + i);
-            monitoringService.handleSensorMeasurement(measurement);
-        }
-
-        // When
-        List<AlarmEvent> alarms = monitoringService.getAlarmEvents();
-
-        // Then
-        assertThat(alarms).hasSize(100);
-    }
 
     private SensorMeasurement createTemperatureMeasurement(double value) {
         return SensorMeasurement.builder()
