@@ -3,9 +3,11 @@ package org.ram.test.temprature.monitoring;
 import org.ram.test.temprature.config.SensorsProps;
 import org.ram.test.temprature.model.AlarmEvent;
 import org.ram.test.temprature.model.SensorMeasurement;
+import org.ram.test.temprature.udp.SensorSimulator;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -26,11 +28,13 @@ public class CentralMonitoringService {
     private static final Logger logger = Logger.getLogger(CentralMonitoringService.class.getName());
 
     private final SensorsProps sensorsProps;
+    private final SensorSimulator sensorSimulator;
     private final List<AlarmEvent> alarmEvents = new ArrayList<>();
     private static final int MAX_ALARM_EVENTS = 100; // Maximum number of alarm events to store
 
-    public CentralMonitoringService(SensorsProps sensorsProps) {
+    public CentralMonitoringService(SensorsProps sensorsProps, SensorSimulator sensorSimulator) {
         this.sensorsProps = sensorsProps;
+        this.sensorSimulator = sensorSimulator;
     }
 
     @EventListener
@@ -63,15 +67,19 @@ public class CentralMonitoringService {
                     .alertMessage(String.format("Alarm: %s sensor %s exceeded threshold! Measured value: %.2f %s, Threshold: %.2f %s",
                             measurement.getSensorType(), measurement.getSensorId(), measurement.getValue(), getUnit(measurement), threshold, getUnit(measurement)))
                     .build();
-            addAlarmEvent(alarmEvent);
+            try {
+                addAlarmEvent(alarmEvent);
+            } catch (IOException e) {
+                logger.severe("Failed to add alarm event: " + e.getMessage());
+            }
             logger.warning("Alarm triggered: " + alarmEvent);
         }
     }
 
-    private synchronized void addAlarmEvent(AlarmEvent alarmEvent) {
+    private synchronized void addAlarmEvent(AlarmEvent alarmEvent) throws IOException {
         if (alarmEvents.size() >= MAX_ALARM_EVENTS) {
+            sensorSimulator.sendSensorData(alarmEvent);
             logger.warning("Alarm events capacity reached. Oldest event will be removed.");
-            alarmEvents.remove(0); // Remove the oldest event to make room for new one
         }
         alarmEvents.add(alarmEvent);
     }

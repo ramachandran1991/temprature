@@ -33,6 +33,9 @@ public class MonitoringController {
     @PostMapping("/measurements")
     @Operation(summary = "Add Measurement", description = "Add a new measurement to the monitoring system")
     public ResponseEntity<String> addMeasurement(SensorMeasurement measurement) {
+       if(measurement == null || measurement.getSensorType() == null || Double.isNaN(measurement.getValue())) {
+           return ResponseEntity.badRequest().body("Invalid measurement data");
+       }
         warehouse.processMeasurements(measurement);
         return ResponseEntity.ok("Measurement added and processed successfully");
     }
